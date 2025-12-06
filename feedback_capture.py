@@ -4,7 +4,7 @@ class HumanFeedbackCapture:
     def __init__(self):
         self.current_feedback = None
         self.feedback_history = []
-        self.last_feedback_step = -999  # Para evitar feedback muy seguido
+        self.last_feedback_step = -999  
 
     def reset(self):
         self.last_feedback_step = -999
@@ -29,15 +29,15 @@ class HumanFeedbackCapture:
         
         feedback = None
         
-        if key == ord('+') or key == ord('='):  # Tecla +
+        if key == ord('+') or key == ord('='): 
             feedback = +1
             print("Feedback: +1 (POSITIVE)")
             
-        elif key == ord('-') or key == ord('_'):  # Tecla -
+        elif key == ord('-') or key == ord('_'): 
             feedback = -1
             print("Feedback: -1 (NEGATIVE)")
             
-        elif key == ord('0'):  # Tecla 0
+        elif key == ord('0'):  
             feedback = 0
             print("Feedback: 0 (NEUTRAL)")
         
