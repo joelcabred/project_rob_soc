@@ -35,8 +35,8 @@ touch_response : spread_linear
 touch_hands : True
 touch_fingers : True
 touch_arms : True
-touch_feet : True
-touch_legs : True
+touch_feet : False
+touch_legs : False
 touch_body : True
 touch_head : True
 touch_eyes : False
@@ -44,16 +44,16 @@ touch_eyes : False
 # --- Motor modality --- #
 
 # Actuation model
-actuation_model : spring_damper  # options: spring_damper, muscle, positional
+actuation_model : positional  # options: spring_damper, muscle, positional
 
 # Actuate joints
 act_hands : True
-act_fingers : True
+act_fingers : False
 act_arms : True
 act_feet : False
-act_legs : True
-act_body : True
-act_head : True
+act_legs : False
+act_body : False
+act_head : False
 act_eyes : False
 
 # Lock joints
@@ -61,7 +61,7 @@ lock_hands : False
 lock_fingers : False
 lock_arms : False
 lock_feet : True
-lock_legs : False
+lock_legs : True
 lock_body : False
 lock_head : False
 lock_eyes : True

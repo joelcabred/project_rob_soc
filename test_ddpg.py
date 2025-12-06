@@ -1,48 +1,178 @@
-"""
-Test básico de Spinning Up con DDPG en Pendulum
-"""
+import numpy as np
 import gymnasium as gym
+import yaml
 import torch
-from spinup import ddpg_pytorch as ddpg
+import cv2
+import sys
+from collections import defaultdict
+
+sys.path.append(".")
+sys.path.append("..")
+
+import babybench.utils as bb_utils
+from ddpg import DDPGAgent
+from TactileObsWrapper import TactileObsWrapper
+
+
+def scale_action(raw_action, env):
+    low  = env.action_space.low
+    high = env.action_space.high
+    return low + 0.5 * (raw_action + 1.0) * (high - low)
+
+
+def detect_region(model, touch, left_ids, right_ids, body_ids):
+    contacts = touch.get_contacts()
+    contacts_clean = []
+
+    left_contact_ids = set()
+    right_contact_ids = set()
+
+    for c_id, b_id, f in contacts:
+        if b_id in left_ids:
+            left_contact_ids.add(c_id)
+        elif b_id in right_ids:
+            right_contact_ids.add(c_id)
+        else:
+            contacts_clean.append([c_id,b_id,f])
+
+    touched = set()
+
+    for c_id, b_id, _ in contacts_clean:
+        if b_id in body_ids:
+            #9 right_lower_arm
+            #13 left_lower_arm
+            if c_id in left_contact_ids and b_id != 13:
+                touched.add(b_id)
+
+            if c_id in right_contact_ids and b_id != 9:
+                touched.add(b_id)
+
+
+
+    return touched
+
+
+# ---------- HAND SPEED ----------
+def extract_hand_speed(obs):
+    qvel = obs[64:64+12]   # QVEL_START : QVEL_START+N_Q
+    return np.linalg.norm(qvel)
+
 
 def main():
-    # Crear environment simple
-    env = gym.make('Pendulum-v1')
-    
-    print("=" * 50)
-    print("Testing Spinning Up DDPG")
-    print("=" * 50)
-    print(f"Environment: Pendulum-v1")
-    print(f"Observation space: {env.observation_space}")
-    print(f"Action space: {env.action_space}")
-    print("=" * 50)
-    
-    # Entrenar con DDPG
-    ddpg(
-        env_fn=lambda: gym.make('Pendulum-v1'),
-        ac_kwargs=dict(hidden_sizes=[256, 256]),  # Tamaño de las redes
-        seed=0,
-        steps_per_epoch=4000,  # Pasos por epoch
-        epochs=10,  # Número de epochs (10 epochs = 40k steps)
-        replay_size=int(1e6),  # Tamaño del replay buffer
-        gamma=0.99,  # Discount factor
-        polyak=0.995,  # Para target network updates
-        pi_lr=1e-3,  # Learning rate del actor
-        q_lr=1e-3,  # Learning rate del critic
-        batch_size=100,
-        start_steps=10000,  # Pasos de exploración random al inicio
-        update_after=1000,  # Cuando empezar a entrenar
-        update_every=50,  # Cada cuántos pasos actualizar
-        act_noise=0.1,  # Ruido de exploración
-        num_test_episodes=10,  # Episodios para evaluar
-        max_ep_len=200,  # Máxima longitud de episodio
-        logger_kwargs=dict(output_dir='./spinup_logs', exp_name='ddpg_pendulum'),
-        save_freq=1  # Guardar modelo cada epoch
-    )
-    
-    print("\n✅ Training completed!")
-    print("Logs saved in: ./spinup_logs/ddpg_pendulum")
-    print("Model saved as: ./spinup_logs/ddpg_pendulum/pyt_save/model.pt")
+    with open("examples/config_selftouch.yml") as f:
+        config = yaml.safe_load(f)
 
-if __name__ == '__main__':
+    env = bb_utils.make_env(config)
+    env.reset()
+    env = TactileObsWrapper(env)
+    env = gym.wrappers.NormalizeObservation(env)
+    env = gym.wrappers.TransformObservation(env,
+                                             lambda obs: np.clip(obs, -10, 10))
+
+    input_dim = env.observation_space.shape[0]
+    output_dim = env.action_space.shape[0]
+
+    agent = DDPGAgent(input_dim, output_dim)
+    agent.actor.load_state_dict(torch.load("actor_selftouch.pt", map_location="cpu"))
+    agent.actor.eval()
+
+    base = env.unwrapped
+    renderer = env.rendered
+
+    episodes = 10
+    max_steps = 1000
+
+    all_metrics = []
+
+    left_ids = [env.LEFT_HAND_ID,env.LEFT_FINGERS_ID]
+    right_ids = [env.RIGHT_HAND_ID,env.RIGHT_FINGERS_ID]
+
+    for episode in range(episodes):
+        state, _ = env.reset()
+        done = False
+        step = 0
+
+        regions = []
+
+        first_touch_step = None
+        freeze_steps = 0
+
+        regions = set()
+
+
+        while not done and step < max_steps:
+            step += 1
+
+            with torch.no_grad():
+                state_t = torch.FloatTensor(state).unsqueeze(0)
+                raw_action = agent.actor(state_t).numpy()[0]
+
+            action = scale_action(raw_action, env)
+            action = np.clip(action,
+                             env.action_space.low,
+                             env.action_space.high)
+
+            next_state, _, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
+
+            # -------- REGION ----------
+            region = detect_region(env.unwrapped.model,
+                                   env.unwrapped.touch,
+                                   left_ids,right_ids,env.BODY_IDS)
+
+            regions = regions.union(region)
+
+            if len(regions) > 0:
+                if first_touch_step is None:
+                    first_touch_step = step
+
+
+            # -------- FREEZE ----------
+            hand_speed = extract_hand_speed(next_state)
+            print(hand_speed)
+            if hand_speed < 1.0:
+                freeze_steps += 1
+
+            state = next_state
+
+            # -------- RENDER ----------
+            renderer.update_scene(base.data)
+            img = renderer.render()
+            img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+            cv2.namedWindow("Test", cv2.WINDOW_NORMAL)
+            cv2.resizeWindow("Test", 720, 720)
+            cv2.imshow("Test", img_bgr)
+            cv2.waitKey(1)
+
+        unique_regions = len(set(regions))
+        freeze_ratio = freeze_steps / step
+
+        metrics = {
+            "episode": episode + 1,
+            "first_touch_step": first_touch_step,
+            "unique_regions": unique_regions,
+            "freeze_ratio": freeze_ratio
+        }
+
+        all_metrics.append(metrics)
+
+        print("\n[TEST METRICS]")
+        for k, v in metrics.items():
+            print(f"{k}: {v}")
+
+    env.close()
+    cv2.destroyAllWindows()
+
+    # ---------- METRICS SUMMARY ----------
+    print("\n========== SUMMARY ==========")
+    for key in all_metrics[0].keys():
+        if key == "episode":
+            continue
+        vals = [m[key] for m in all_metrics if m[key] is not None]
+        if len(vals) > 0:
+            print(f"{key}: {np.mean(vals):.3f}")
+
+
+if __name__ == "__main__":
     main()
