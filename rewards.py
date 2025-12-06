@@ -143,7 +143,7 @@ def compute_reward_full(obs, prev_obs, env, prev_region, k=10):
     torque = extract_torques(env, obs, k=k)
     energy_penalty = 0.001 * np.sum(torque**2)
 
-    # 7. Penalización por cercanía a límites articulares
+    # 7. articular limits
     lim_pen = joint_limit_penalty(env.last_action, env)
 
     # 8. Speed penalty
