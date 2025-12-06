@@ -8,30 +8,30 @@ import random
 
 class HumanRewardModel(nn.Module):
     """
-    Red neuronal que aprende a predecir el feedback prosódico humano (-1, 0, +1)
-    basándose en pares estado-acción
+    Neural network that learns to predict human prosodic feedback (-1, 0, +1)
+    based on state-action pairs
     """
     def __init__(self, state_size, action_size, hidden_size=256):
         super(HumanRewardModel, self).__init__()
         
         self.fc1 = nn.Linear(state_size + action_size, hidden_size)
         self.fc2 = nn.Linear(hidden_size, hidden_size)
-        self.fc3 = nn.Linear(hidden_size, 1)  # Predice recompensa escalar
+        self.fc3 = nn.Linear(hidden_size, 1)  # Predicts scalar reward
         
     def forward(self, state, action):
         """
         state: [batch, state_size]
         action: [batch, action_size]
-        returns: [batch, 1] predicción de recompensa humana
+        returns: [batch, 1] human reward prediction
         """
         x = torch.cat([state, action], dim=1)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        return self.fc3(x)  # Sin activación, salida continua
+        return self.fc3(x)  # No activation, continuous output
     
 class TAMERModule:
     """
-    Módulo TAMER que maneja feedback humano prosódico sobre trayectorias
+    TAMER module that handles prosodic human feedback over trajectories
     """
     def __init__(self, state_size, action_size, 
                  credit_window=15, 
@@ -43,18 +43,18 @@ class TAMERModule:
         self.credit_window = credit_window
         self.decay_factor = decay_factor
         
-        # Red que predice recompensa humana
+        # Network that predicts human reward
         self.reward_model = HumanRewardModel(state_size, action_size)
         self.optimizer = optim.Adam(self.reward_model.parameters(), lr=learning_rate)
         self.criterion = nn.MSELoss()
         
-        # Deque pequeño para trayectoria reciente (ventana de crédito)
+        # Small deque for recent trajectory (credit window)
         self.recent_trajectory = deque(maxlen=credit_window)
         
-        # Buffer grande para ejemplos de entrenamiento
+        # Large buffer for training examples
         self.training_buffer = deque(maxlen=10000)
         
-        # Estadísticas
+        # Statistics
         self.feedback_count = 0
         self.total_samples = 0
 
@@ -65,8 +65,8 @@ class TAMERModule:
         
     def observe_step(self, state, action):
         """
-        Registra cada paso de la trayectoria
-        Llamar esto en cada step del episodio
+        Records each step of the trajectory
+        Call this on each episode step
         """
         self.recent_trajectory.append({
             'state': state.copy(),
@@ -76,24 +76,24 @@ class TAMERModule:
     
     def give_prosody_feedback(self, feedback_value):
         """
-        Humano da feedback prosódico sobre la trayectoria reciente
+        Human gives prosodic feedback on recent trajectory
         
         Args:
-            feedback_value: -1 (prosody negativa), 0 (neutral), +1 (prosody positiva)
+            feedback_value: -1 (negative prosody), 0 (neutral), +1 (positive prosody)
         """
-        assert feedback_value in [-1, 0, 1], "Feedback debe ser -1, 0, o +1"
+        assert feedback_value in [-1, 0, 1], "Feedback must be -1, 0, or +1"
         
         if len(self.recent_trajectory) == 0:
-            print("Warning: No hay trayectoria para asignar feedback")
+            print("Warning: No trajectory to assign feedback")
             return
         
         self.feedback_count += 1
         samples_added = 0
         
-        # Asigna crédito a todos los pasos en la ventana reciente
-        # con decaimiento temporal (pasos más recientes reciben más crédito)
+        # Assigns credit to all steps in the recent window
+        # with temporal decay (more recent steps receive more credit)
         for i, step in enumerate(reversed(self.recent_trajectory)):
-            # i=0 es el paso más reciente, i=N-1 es el más antiguo
+            # i=0 is the most recent step, i=N-1 is the oldest
             credit = feedback_value * (self.decay_factor ** i)
             
             self.training_buffer.append({
@@ -104,21 +104,21 @@ class TAMERModule:
             })
             samples_added += 1
         
-        print(f"Feedback {feedback_value:+d} → {samples_added} pasos creditados "
+        print(f"Feedback {feedback_value:+d} → {samples_added} steps credited "
               f"(buffer: {len(self.training_buffer)} samples)")
     
     def train_batch(self, batch_size=64):
         """
-        Entrena el modelo de recompensa humana con un batch
-        Llamar esto periódicamente durante el entrenamiento
+        Trains the human reward model with a batch
+        Call this periodically during training
         
         Returns:
-            loss: pérdida del batch (None si no hay suficientes datos)
+            loss: batch loss (None if insufficient data)
         """
         if len(self.training_buffer) < batch_size:
             return None
         
-        # Sample batch aleatorio
+        # Random batch sample
         batch = random.sample(self.training_buffer, batch_size)
         
         states = torch.FloatTensor(np.array([x['state'] for x in batch]))
@@ -138,10 +138,10 @@ class TAMERModule:
     
     def predict_human_reward(self, state, action):
         """
-        Predice qué feedback prosódico daría el humano para este estado-acción
+        Predicts what prosodic feedback the human would give for this state-action
         
         Returns:
-            reward: valor escalar predicho (aproximadamente entre -1 y +1)
+            reward: predicted scalar value (approximately between -1 and +1)
         """
         self.reward_model.eval()
         with torch.no_grad():
@@ -153,13 +153,13 @@ class TAMERModule:
     
     def reset_trajectory(self):
         """
-        Limpia la trayectoria reciente
-        Llamar al inicio de cada nuevo episodio
+        Clears the recent trajectory
+        Call at the start of each new episode
         """
         self.recent_trajectory.clear()
     
     def get_stats(self):
-        """Retorna estadísticas útiles"""
+        """Returns useful statistics"""
         return {
             'feedback_count': self.feedback_count,
             'training_samples': len(self.training_buffer),
