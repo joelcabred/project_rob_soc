@@ -29,7 +29,6 @@ class HumanFeedbackCapture:
         
         feedback = None
         
-        # Mapeo de teclas a feedback prosódico
         if key == ord('+') or key == ord('='):  # Tecla +
             feedback = +1
             print("Feedback: +1 (POSITIVE)")
