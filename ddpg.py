@@ -1,3 +1,8 @@
+"""
+Deep Deterministic Policy Gradient (DDPG) agent implementation for continuous control tasks.
+Combines actor-critic architecture with experience replay and target networks for stable learning.
+Includes Ornstein-Uhlenbeck noise for action space exploration and soft updates for target network synchronization.
+"""
 from collections import deque
 import torch
 import torch.nn as nn

@@ -1,3 +1,9 @@
+"""
+DDPG agent enhanced with TAMER (Training an Agent Manually via Evaluative Reinforcement) integration.
+Combines traditional reinforcement learning rewards with human feedback signals, allowing the agent
+to learn from both environmental rewards and real-time human evaluations. Supports configurable 
+weighting between intrinsic rewards (alpha) and human feedback (beta) for flexible learning strategies.
+"""
 from collections import deque
 import torch
 import torch.nn as nn

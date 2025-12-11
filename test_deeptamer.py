@@ -1,3 +1,9 @@
+"""
+Evaluation script for testing a TAMER-enhanced DDPG agent's self-touch behavior in MIMo.
+Loads a pre-trained actor network from a human-feedback-trained agent and evaluates its performance
+using metrics like time to first touch, body region coverage, and movement patterns. Demonstrates
+the behavioral outcomes of combining reinforcement learning with human guidance.
+"""
 import numpy as np
 import gymnasium as gym
 import yaml

@@ -1,3 +1,10 @@
+"""
+TAMER (Training an Agent Manually via Evaluative Reinforcement) module that learns 
+from human feedback signals. Uses a neural network to predict human rewards based on 
+state-action pairs, with temporal credit assignment that distributes feedback across 
+recent trajectory steps using exponential decay.
+"""
+
 from collections import deque
 import torch
 import torch.nn as nn

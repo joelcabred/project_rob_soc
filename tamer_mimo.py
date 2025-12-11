@@ -1,6 +1,10 @@
 """
-Example: Random policy for hand-regard baseline
+Training script for DDPG agent with TAMER integration for learning self-touch behavior in MIMo.
+Combines traditional RL rewards with real-time human feedback captured via keyboard input during
+training episodes. Supports interactive training where humans can provide positive (+), negative (-),
+or neutral (0) feedback to shape the agent's behavior beyond the programmed reward function.
 """
+
 import numpy as np
 import os
 import gymnasium as gym

@@ -1,6 +1,10 @@
 """
-Example: Random policy for hand-regard baseline
+Training script for a DDPG agent learning self-touch behavior in the MIMo robotic environment.
+Uses tactile observations, action normalization, and custom reward shaping to train the agent
+to explore and develop coordinated self-touching movements. Includes visualization, progress
+tracking, and model checkpointing capabilities.
 """
+
 import numpy as np
 import os
 import gymnasium as gym

@@ -1,3 +1,9 @@
+"""
+A class for capturing and managing human feedback during reinforcement learning training.
+This class allows real-time keyboard input to provide positive, negative, or neutral 
+feedback signals, with configurable intervals to prevent spam and built-in tracking 
+of feedback history and statistics.
+"""
 import cv2
 
 class HumanFeedbackCapture:

@@ -1,3 +1,9 @@
+"""
+Evaluation script for testing a trained DDPG agent's self-touch behavior in the MIMo environment.
+Loads a pre-trained actor network and measures performance metrics including time to first touch,
+number of unique body regions contacted, and movement freeze ratios. Provides visual rendering
+of the agent's behavior and summarizes results across multiple test episodes.
+"""
 import numpy as np
 import gymnasium as gym
 import yaml
