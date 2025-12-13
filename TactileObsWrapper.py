@@ -9,7 +9,6 @@ class TactileObsWrapper(gym.ObservationWrapper):
         self.k = k
         self.env = env
         self.action_space = env.action_space
-
         self.base = env.unwrapped
         self.rendered = mujoco.Renderer(self.base.model)
 
