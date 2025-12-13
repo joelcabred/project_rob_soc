@@ -69,7 +69,7 @@ def capture_action_correction(steps, min_interval=30):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='config_selftouch_pos.yml', type=str,
+    parser.add_argument('--config', default='config_selftouch.yml', type=str,
                         help='The configuration file to set up environment variables')
     parser.add_argument('--train_for', default=1000, type=int,
                         help='Total timesteps of training')

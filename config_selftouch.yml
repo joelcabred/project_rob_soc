@@ -44,7 +44,7 @@ touch_eyes : False
 # --- Motor modality --- #
 
 # Actuation model
-actuation_model : spring_damper  # options: spring_damper, muscle, positional
+actuation_model : positional  # options: spring_damper, muscle, positional
 
 # Actuate joints
 act_hands : True
