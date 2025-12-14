@@ -1,8 +1,9 @@
-## BabyBench – Self-Touch Learning
+## ProTAMER: Prosody-Based Human Feedback for Learning Self-Touch Behaviors in Social Robots
 
 This project trains and evaluates DDPG agents on the BabyBench self-touch task,
 with optional human feedback (DeepTAMER).
 
+GIT: https://github.com/joelcabred/project_rob_soc
 ---
 
 ## 1. Environment setup
