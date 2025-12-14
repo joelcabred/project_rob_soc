@@ -12,7 +12,7 @@ class GaussianPolicyNetwork(nn.Module):
     Stochastic policy network for continuous actions
     Outputs mean and log_std for Gaussian distribution πθ(a|s)
     """
-    def __init__(self, state_size, action_size, hidden_size=256, log_std_min=-20, log_std_max=2):
+    def __init__(self, state_size, action_size, hidden_size=256, log_std_min=-10, log_std_max=2):
         super(GaussianPolicyNetwork, self).__init__()
         
         self.fc1 = nn.Linear(state_size, hidden_size)
@@ -20,7 +20,7 @@ class GaussianPolicyNetwork(nn.Module):
         self.mean = nn.Linear(hidden_size, action_size)
         self.log_std = nn.Linear(hidden_size, action_size)
         
-        self.log_std_min = log_std_min
+        self.log_std_min = log_std_min  # Changed from -20 to -10 to prevent variance collapse
         self.log_std_max = log_std_max
         
     def forward(self, state):
@@ -215,7 +215,11 @@ class DeepCOACHModule:
                 
                 # Compute importance sampling ratio: πθ(a|s) / p
                 # In log space: exp(log πθ(a|s) - log p)
-                importance_ratio = torch.exp(log_prob_current - math.log(old_prob + 1e-10))
+                log_ratio = log_prob_current - math.log(old_prob + 1e-10)
+                
+                # Clip importance ratio to prevent explosion (typically [0.1, 10])
+                log_ratio = torch.clamp(log_ratio, -2.3, 2.3)  # exp(-2.3) ≈ 0.1, exp(2.3) ≈ 10
+                importance_ratio = torch.exp(log_ratio)
                 
                 # Compute gradient: ∇θ log πθ(a|s)
                 self.optimizer.zero_grad()
@@ -233,6 +237,9 @@ class DeepCOACHModule:
                     eligibility_trace = importance_ratio.item() * grad_log_prob
                 else:
                     eligibility_trace = self.eligibility_decay * eligibility_trace + importance_ratio.item() * grad_log_prob
+                
+                # Clip eligibility trace to prevent explosion
+                eligibility_trace = torch.clamp(eligibility_trace, -3.0, 3.0)
             
             # Accumulate: ēλ ← ēλ + F*eλ
             if eligibility_trace is not None:
@@ -244,6 +251,14 @@ class DeepCOACHModule:
         # Average over minibatch: ēλ ← (1/m) * ēλ
         if total_eligibility is not None:
             total_eligibility = total_eligibility / len(minibatch)
+            
+            # Check for NaN or Inf
+            if torch.isnan(total_eligibility).any() or torch.isinf(total_eligibility).any():
+                print("WARNING: NaN or Inf detected in total_eligibility! Skipping update.")
+                return None
+            
+            # Clip total eligibility to prevent excessive updates
+            total_eligibility = torch.clamp(total_eligibility, -5.0, 5.0)
             
             # Add entropy regularization: ēλ ← ēλ + β*∇θ H(πθ(·|st))
             # Sample a recent state for entropy
@@ -281,10 +296,22 @@ class DeepCOACHModule:
             idx = 0
             for param in self.policy.parameters():
                 num_params = param.numel()
-
-                # Update automatically self.policy parameters
-                param.data += self.learning_rate * total_eligibility[idx:idx+num_params].reshape(param.shape)  # θ ← θ + α*ēλ
+                
+                # Compute update
+                update = self.learning_rate * total_eligibility[idx:idx+num_params].reshape(param.shape)
+                
+                # Clip individual parameter updates to prevent explosion
+                update = torch.clamp(update, -0.01, 0.01)
+                
+                # Apply update: θ ← θ + α*ēλ
+                param.data += update
                 idx += num_params
+            
+            # Check for NaN in policy parameters after update
+            for param in self.policy.parameters():
+                if torch.isnan(param).any():
+                    print("ERROR: NaN detected in policy parameters after update!")
+                    return None
             
             return total_eligibility.norm().item()
         
