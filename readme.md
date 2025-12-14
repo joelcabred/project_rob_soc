@@ -1,5 +1,10 @@
-Pour lancer le code : 
+To launch the Deep COACH code : 
 
+```
+python coach_mimo.py --config config_selftouch.yml --train_for 1000
+```
+
+To launch the Deep COACH +DDPG code :
 ```
 python coach_mimo.py --config config_selftouch.yml --train_for 1000 --alpha 0.7 --beta 0.3
 ```
