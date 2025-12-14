@@ -261,7 +261,19 @@ class DeepCOACHModule:
             for param in self.policy.parameters():
                 if param.grad is not None:
                     grad_entropy.append(param.grad.clone().flatten())
+                else:
+                    # If no gradient, add zeros with the right size
+                    grad_entropy.append(torch.zeros_like(param.flatten()))
             grad_entropy = torch.cat(grad_entropy)
+            
+            # Ensure grad_entropy has the same size as total_eligibility
+            if grad_entropy.size(0) != total_eligibility.size(0):
+                print(f"WARNING: Size mismatch - grad_entropy: {grad_entropy.size(0)}, total_eligibility: {total_eligibility.size(0)}")
+                # Pad or truncate to match
+                if grad_entropy.size(0) < total_eligibility.size(0):
+                    grad_entropy = torch.cat([grad_entropy, torch.zeros(total_eligibility.size(0) - grad_entropy.size(0))])
+                else:
+                    grad_entropy = grad_entropy[:total_eligibility.size(0)]
             
             total_eligibility += self.entropy_coef * grad_entropy
             
