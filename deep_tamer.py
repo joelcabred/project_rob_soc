@@ -111,7 +111,7 @@ class TAMERModule:
             })
             samples_added += 1
         
-        print(f"Feedback {feedback_value:+d} → {samples_added} steps credited "
+        print(f"Feedback {feedback_value:+d} -> {samples_added} steps credited "
               f"(buffer: {len(self.training_buffer)} samples)")
     
     def train_batch(self, batch_size=64):

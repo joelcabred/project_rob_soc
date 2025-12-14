@@ -1,0 +1,60 @@
+<!--
+{
+    "save_dir": "results/self_touch",
+    "behavior": "self_touch",
+    "scene": "base",
+    "max_episode_steps": 1000,
+    "frame_skip": 1,
+    "render_size": 480,
+    "save_logs_every": 1000,
+    "save_dir_Q": "models/q_learning_human",
+    "proprio_velocity": true,
+    "proprio_torque": true,
+    "proprio_limits": true,
+    "proprio_actuation": true,
+    "vestibular_active": true,
+    "vision_active": false,
+    "vision_resolution": 64,
+    "touch_active": true,
+    "touch_scale": 1.0,
+    "touch_function": "force_vector",
+    "touch_response": "spread_linear",
+    "touch_hands": true,
+    "touch_fingers": true,
+    "touch_arms": true,
+    "touch_feet": false,
+    "touch_legs": false,
+    "touch_body": true,
+    "touch_head": true,
+    "touch_eyes": false,
+    "actuation_model": "positional",
+    "act_hands": true,
+    "act_fingers": false,
+    "act_arms": true,
+    "act_feet": false,
+    "act_legs": false,
+    "act_body": false,
+    "act_head": false,
+    "act_eyes": false,
+    "lock_hands": false,
+    "lock_fingers": false,
+    "lock_arms": false,
+    "lock_feet": true,
+    "lock_legs": true,
+    "lock_body": false,
+    "lock_head": false,
+    "lock_eyes": true
+}
+-->
+<mujoco model="MIMo">
+<worldbody>
+<body name="mimo_location" pos="0 0 .1" euler="0 -90 0">
+<freejoint name="mimo_location"/>
+<include file="C:\Users\joelc\sorbonne\robotique_social\projet\project_rob_soc\BabyBench2025_Starter_Kit\MIMo\mimoEnv\assets/babybench/mimo_v1.xml"></include>
+</body>
+</worldbody>
+<include file="C:\Users\joelc\sorbonne\robotique_social\projet\project_rob_soc\BabyBench2025_Starter_Kit\MIMo\mimoEnv\assets/babybench/base.xml"></include>
+<include file="C:\Users\joelc\sorbonne\robotique_social\projet\project_rob_soc\BabyBench2025_Starter_Kit\MIMo\mimoEnv\assets/babybench/meta_v1.xml"></include>
+<include file="C:\Users\joelc\sorbonne\robotique_social\projet\project_rob_soc\BabyBench2025_Starter_Kit\MIMo\mimoEnv\assets/babybench/position_arms.xml"></include>
+<include file="C:\Users\joelc\sorbonne\robotique_social\projet\project_rob_soc\BabyBench2025_Starter_Kit\MIMo\mimoEnv\assets/babybench/position_hands.xml"></include>
+</mujoco>

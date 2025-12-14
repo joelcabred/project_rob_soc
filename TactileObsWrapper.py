@@ -1,10 +1,3 @@
-"""
-Gymnasium observation wrapper that transforms MIMo environment observations into tactile-focused
-feature vectors. Extracts k-nearest sensor readings from contact points on hands and fingers,
-combines them with joint positions, velocities, and torques to create a comprehensive tactile
-observation space suitable for learning self-touch behaviors.
-"""
-
 import numpy as np
 import gymnasium as gym
 import mujoco

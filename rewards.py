@@ -1,11 +1,3 @@
-"""
-Reward shaping functions for training a self-touch behavior agent in the MIMo environment.
-Implements multi-objective reward components including tactile contact detection, movement novelty,
-body region exploration, motion constraints, and energy efficiency. Provides utilities for parsing
-observation vectors and computing penalties for undesired behaviors like joint limit violations
-and excessive speed or stillness.
-"""
-
 import numpy as np
 
 def split_obs(env, obs, k=10):
